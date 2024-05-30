@@ -38,7 +38,7 @@ private:
 
     static std::string clearBack(std::string& string_for_clear, char);
 
-    std::unordered_map<std::string, std::string> getMapping(std::string src_device, std::string dest_device);
+    std::unordered_map<std::string, std::string> getMapping(std::string dest_device);
 
 
 public:
@@ -52,9 +52,9 @@ public:
 
     void parseAll();
 
-    int send(const std::string src_model, const std::string dest_model, const u_char* data);
+    int send(const std::string dest_model, const u_char* data);
 
-    int receive(const std::string src_model, const std::string dest_model, u_char* packet);
+    int receive(const std::string dest_model, u_char* packet);
 };
 
 

@@ -92,7 +92,7 @@ int PcapHandler::read(u_char* packet) {
 
     if (res > 0) {
         memcpy(packet, data, header->caplen);
-        return 1;
+        return 0;
     } else {
         return -1;
     }

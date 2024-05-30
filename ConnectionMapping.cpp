@@ -66,10 +66,6 @@ void ConnectionMapping::parseModels() {
             clearBack(cur_model, '\r');
             std::vector<std::string> model_params = split(cur_model, ' ');
 
-            if (model_params[0] == "GUI") {
-                this->models[model_params[0]] = std::make_tuple(model_params[1], std::string(" "), std::string(" "));
-                continue;
-            }
             this->models[model_params[0]] = std::make_tuple(model_params[1], //number trans interface
                                                             model_params[2], //number receive interface
                                                             model_params[3]); //udp-port
@@ -112,8 +108,14 @@ std::string ConnectionMapping::clearBack(std::string &string_for_clear, char) {
 }
 
 std::unordered_map<std::string, std::string>
-ConnectionMapping::getMapping(std::string src_device, std::string dest_device) {
+ConnectionMapping::getMapping(std::string dest_device) {
     std::unordered_map<std::string, std::string> to_return;
+
+    to_return["status"] = "true";
+    if (this->models.find(dest_device) == this->models.end()) {
+        to_return["status"] = "false";
+        return to_return;
+    }
 
     std::tuple<std::string, std::string, std::string> src_model_data = this->models[dest_device]; //Получаем информацию из Models, через какие интерфейсы и порт передаёт и получает информацию Модель
     std::string _ = std::get<0>(src_model_data); //интерефейс для отправления пакетов
@@ -138,27 +140,43 @@ ConnectionMapping::getMapping(std::string src_device, std::string dest_device) {
 
 
 
-int ConnectionMapping::send(const std::string src_model, const std::string dest_model, const u_char *data) {
-    std::unordered_map<std::string, std::string> mapping = this->getMapping(src_model, dest_model);
+int ConnectionMapping::send(const std::string dest_model, const u_char *data) {
+    std::unordered_map<std::string, std::string> mapping = this->getMapping(dest_model);
 
-    if (!this->handler.openChannel(this->ip_to_real_name[mapping["src_IP"]])) {
-        std::cerr << "Failed to open channel in pcap." << std::endl;
-        return 1;
+    if(mapping["status"] == "false") {
+        return -1;
+    }
+
+    if (this->ip_to_real_name.find(mapping["src_IP"]) == this->ip_to_real_name.end())
+    {
+        return -1;
+    } else {
+        if (!this->handler.openChannel(this->ip_to_real_name[mapping["src_IP"]])) {
+            return -1;
+        }
     }
 
     this->handler.write(mapping["src_IP"], mapping["dest_IP"], mapping["src_MAC"], mapping["dest_MAC"], std::stoi(mapping["src_port"]), std::stoi(mapping["dest_port"]), data);
 
     this->handler.close_channel();
-    std::cout << "End send" << std::endl;
 
     return 0;
 }
 
-int ConnectionMapping::receive(const std::string src_model, const std::string dest_model, u_char* packet) {
-    std::unordered_map<std::string, std::string> mapping = this->getMapping(src_model, dest_model);
+int ConnectionMapping::receive(const std::string dest_model, u_char* packet) {
+    std::unordered_map<std::string, std::string> mapping = this->getMapping(dest_model);
 
-    if (!this->handler.openChannel(this->ip_to_real_name[mapping["dest_IP"]])) {
-        std::cerr << "Failed to open channel in pcap." << std::endl;
+    if(mapping["status"] == "false") {
+        return -1;
+    }
+
+    if (this->ip_to_real_name.find(mapping["src_IP"]) == this->ip_to_real_name.end())
+    {
+        return -1;
+    } else {
+        if (!this->handler.openChannel(this->ip_to_real_name[mapping["dest_IP"]])) {
+            return -1;
+        }
     }
 
     this->handler.setReadFilter(std::stoi(mapping["dest_port"]));
