@@ -40,7 +40,7 @@ void ConnectionMapping::parseConfig() {
 
             this->config.push_back(std::make_tuple(config_params[1], //MAC-address
                                                    config_params[2])); //src device
-            this->ip_to_real_name[this->subnet + config_params[0]] = "";
+            this->ipToRealName[this->subnet + config_params[0]] = "";
         }
     }
 
@@ -48,8 +48,8 @@ void ConnectionMapping::parseConfig() {
 
     for (pcap_if_t *d = this->handler.alldevs; d != nullptr; d = d->next) {
         std::string device_ip = PcapHandler::getIpInfo(d);
-        if (this->ip_to_real_name.count(device_ip) > 0) {
-            this->ip_to_real_name[device_ip] = d->name;
+        if (this->ipToRealName.count(device_ip) > 0) {
+            this->ipToRealName[device_ip] = d->name;
         }
     }
 }
@@ -147,18 +147,18 @@ int ConnectionMapping::send(const std::string dest_model, const u_char *data) {
         return -1;
     }
 
-    if (this->ip_to_real_name.find(mapping["src_IP"]) == this->ip_to_real_name.end())
+    if (this->ipToRealName.find(mapping["src_IP"]) == this->ipToRealName.end())
     {
         return -1;
     } else {
-        if (!this->handler.openChannel(this->ip_to_real_name[mapping["src_IP"]])) {
+        if (!this->handler.openChannel(this->ipToRealName[mapping["src_IP"]])) {
             return -1;
         }
     }
 
     this->handler.write(mapping["src_IP"], mapping["dest_IP"], mapping["src_MAC"], mapping["dest_MAC"], std::stoi(mapping["src_port"]), std::stoi(mapping["dest_port"]), data);
 
-    this->handler.close_channel();
+    this->handler.closeChannel();
 
     return 0;
 }
@@ -170,11 +170,11 @@ int ConnectionMapping::receive(const std::string dest_model, u_char* packet) {
         return -1;
     }
 
-    if (this->ip_to_real_name.find(mapping["src_IP"]) == this->ip_to_real_name.end())
+    if (this->ipToRealName.find(mapping["src_IP"]) == this->ipToRealName.end())
     {
         return -1;
     } else {
-        if (!this->handler.openChannel(this->ip_to_real_name[mapping["dest_IP"]])) {
+        if (!this->handler.openChannel(this->ipToRealName[mapping["dest_IP"]])) {
             return -1;
         }
     }
@@ -182,6 +182,7 @@ int ConnectionMapping::receive(const std::string dest_model, u_char* packet) {
     this->handler.setReadFilter(std::stoi(mapping["dest_port"]));
 
     int res = this->handler.read(packet);
+    this->handler.closeChannel();
     return res;
 }
 

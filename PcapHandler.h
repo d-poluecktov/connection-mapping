@@ -53,12 +53,9 @@ private:
     struct bpf_program filter{};
     bpf_u_int32 net, mask;
 
-    std::string src_ip;
-    std::string src_mac;
-
     static ethernet_header constructEthernetHeader(const std::string& src_mac, const std::string& dest_mac);
 
-    static ip_header constructIpHeader(const std::string& src_ip, const std::string& dest_ip, size_t payloadSize);
+    static ip_header constructIpHeader(const std::string& src_ip, const std::string& dest_ip, size_t payload_size);
 
     static udp_header constructUdpHeader(const int src_port, const int dest_port, size_t payload_size);
 
@@ -67,12 +64,10 @@ private:
     static char* iptos(u_long in);
 
 
-
-
 public:
     pcap_if_t *alldevs;
 
-    std::string interfaceName;
+    std::string interface_name;
 
     PcapHandler() : handle(nullptr) {
         if (pcap_findalldevs(&this->alldevs, this->errbuf) == -1) {
@@ -81,7 +76,7 @@ public:
     }
 
     ~PcapHandler() {
-        close_channel();
+        closeChannel();
     }
 
     static std::string getIpInfo(pcap_if_t *d);
@@ -94,7 +89,7 @@ public:
 
     void write(const std::string& src_ip, const std::string& dest_ip, const std::string& src_mac, const std::string& dest_mac, const int src_port, const int dest_port, const u_char* payload);
 
-    void close_channel();
+    void closeChannel();
 };
 
 

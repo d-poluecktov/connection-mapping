@@ -15,12 +15,12 @@ ethernet_header PcapHandler::constructEthernetHeader(const std::string &src_mac,
     return header;
 }
 
-ip_header PcapHandler::constructIpHeader(const std::string &src_ip, const std::string &dest_ip, size_t payloadSize) {
+ip_header PcapHandler::constructIpHeader(const std::string &src_ip, const std::string &dest_ip, size_t payload_size) {
     ip_header header{};
 
     header.version_and_header_length = 0x45;
     header.type_of_service = 0;
-    header.total_length = htons(sizeof(ip_header) + sizeof(udp_header) + payloadSize);
+    header.total_length = htons(sizeof(ip_header) + sizeof(udp_header) + payload_size);
     header.identification = 0;
     header.flags_and_fragment_offset = 0;
     header.time_to_live = 128;
@@ -57,7 +57,7 @@ void PcapHandler::constructUdpBuffer(u_char *packet_buffer, ethernet_header &eth
 }
 
 bool PcapHandler::openChannel(const std::string &iface_name) {
-    this->interfaceName = iface_name;
+    this->interface_name = iface_name;
     this->handle = pcap_open_live(iface_name.c_str(), 65536, 1, 7000, this->errbuf);
     if (handle == nullptr) return false;
 
@@ -114,12 +114,12 @@ void PcapHandler::write(const std::string &src_ip, const std::string &dest_ip, c
     }
 }
 
-void PcapHandler::close_channel() {
+void PcapHandler::closeChannel() {
     if (handle != nullptr) {
         pcap_freecode(&this->filter);
         pcap_close(handle);
         handle = nullptr;
-        interfaceName.clear();
+        interface_name.clear();
     }
 }
 

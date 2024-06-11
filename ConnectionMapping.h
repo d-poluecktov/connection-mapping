@@ -30,7 +30,7 @@ private:
     std::unordered_map<std::string, std::tuple<std::string, std::string, std::string>> models;
     std::vector<std::string> names;
 
-    std::unordered_map<std::string, std::string> ip_to_real_name;
+    std::unordered_map<std::string, std::string> ipToRealName;
 
     PcapHandler handler;
 
