@@ -21,7 +21,5 @@ int main(int argc, char *argv[]) {
     int res_send = mapping.send("Imp1", packet_for_send); //Отправить пакет
 
     //Принять пакет со стороны Imp1 (на 1 сервер) передать указатель, куда скопируется содержимое пакета
-    u_char *packet_for_receive = new u_char[60];
-    int res_receive = mapping.receive("Imp1", packet_for_receive); // Принять пакет
-    //Обе функции возвращают 0 - если выполнена успешно, и -1 если нет
+    u_char* packet = mapping.receive("Imp1"); // Принять пакет
 }

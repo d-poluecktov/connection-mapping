@@ -163,25 +163,25 @@ int ConnectionMapping::send(const std::string dest_model, const u_char *data) {
     return 0;
 }
 
-int ConnectionMapping::receive(const std::string dest_model, u_char* packet) {
+u_char* ConnectionMapping::receive(const std::string dest_model) {
     std::unordered_map<std::string, std::string> mapping = this->getMapping(dest_model);
 
     if(mapping["status"] == "false") {
-        return -1;
+        return nullptr;
     }
 
     if (this->ipToRealName.find(mapping["src_IP"]) == this->ipToRealName.end())
     {
-        return -1;
+        return nullptr;
     } else {
         if (!this->handler.openChannel(this->ipToRealName[mapping["dest_IP"]])) {
-            return -1;
+            return nullptr;
         }
     }
 
     this->handler.setReadFilter(std::stoi(mapping["dest_port"]));
 
-    int res = this->handler.read(packet);
+    u_char* res = this->handler.read();
     this->handler.closeChannel();
     return res;
 }

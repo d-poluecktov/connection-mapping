@@ -85,7 +85,7 @@ public:
 
     bool setReadFilter(int port_for_read);
 
-    int read(u_char* packet);
+    u_char* read();
 
     void write(const std::string& src_ip, const std::string& dest_ip, const std::string& src_mac, const std::string& dest_mac, const int src_port, const int dest_port, const u_char* payload);
 

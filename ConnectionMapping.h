@@ -54,7 +54,7 @@ public:
 
     int send(const std::string dest_model, const u_char* data);
 
-    int receive(const std::string dest_model, u_char* packet);
+    u_char* receive(const std::string dest_model);
 };
 
 

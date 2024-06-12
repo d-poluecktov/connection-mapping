@@ -84,17 +84,19 @@ bool PcapHandler::setReadFilter(int port_for_read) {
     return true;
 }
 
-int PcapHandler::read(u_char* packet) {
+u_char* PcapHandler::read() {
     struct pcap_pkthdr* header;
     const u_char* data;
+    const int ETHERNET_SHIFT = 42;
 
     int res = pcap_next_ex(this->handle, &header, &data);
 
     if (res > 0) {
-        memcpy(packet, data, header->caplen);
-        return 0;
+        auto* packet = new u_char[header->caplen - ETHERNET_SHIFT];
+        memcpy(packet, data + ETHERNET_SHIFT, header->caplen - ETHERNET_SHIFT);
+        return packet;
     } else {
-        return -1;
+        return nullptr;
     }
 }
 
