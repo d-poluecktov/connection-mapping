@@ -1,9 +1,3 @@
-#include<iostream>
-#include<fstream>
-#include<string>
-#include<vector>
-#include<unordered_map>
-
 #include "ConnectionMapping.h"
 
 std::vector<std::string> ConnectionMapping::split(const std::string& string_for_split, char delimiter) {
@@ -30,6 +24,11 @@ void ConnectionMapping::parseConfig() {
         std::string cur_config;
         while (std::getline(in, cur_config)) {
             clearBack(cur_config, '\r');
+
+            if (cur_config.empty()) {
+                continue;
+            }
+
             cnt++;
             if (cnt == 1) {
                 this->subnet = cur_config;
@@ -64,6 +63,11 @@ void ConnectionMapping::parseModels() {
         std::string cur_model;
         while (std::getline(in, cur_model)) {
             clearBack(cur_model, '\r');
+
+            if (cur_model.empty()) {
+                continue;
+            }
+
             std::vector<std::string> model_params = split(cur_model, ' ');
 
             this->models[model_params[0]] = std::make_tuple(model_params[1], //number trans interface
@@ -86,6 +90,11 @@ void ConnectionMapping::parseNames() {
         int cnt = 0;
         std::string cur_name;
         while (std::getline(in, cur_name)) {
+
+            if (cur_name.empty()) {
+                continue;
+            }
+
             cnt++;
             if (cnt == 1) {
                 continue;
@@ -156,32 +165,46 @@ int ConnectionMapping::send(const std::string dest_model, const u_char *data) {
         }
     }
 
-    this->handler.write(mapping["src_IP"], mapping["dest_IP"], mapping["src_MAC"], mapping["dest_MAC"], std::stoi(mapping["src_port"]), std::stoi(mapping["dest_port"]), data);
+    this->handler.write(mapping["src_IP"], mapping["dest_IP"], mapping["src_MAC"], mapping["dest_MAC"],
+                            std::stoi(mapping["src_port"]), std::stoi(mapping["dest_port"]), data);
 
     this->handler.closeChannel();
 
     return 0;
 }
 
-u_char* ConnectionMapping::receive(const std::string dest_model) {
+ReceivedPacket ConnectionMapping::receive(const std::string dest_model) {
     std::unordered_map<std::string, std::string> mapping = this->getMapping(dest_model);
 
     if(mapping["status"] == "false") {
-        return nullptr;
+        ReceivedPacket null_packet;
+        null_packet.size = 0;
+        null_packet.payload = nullptr;
+        null_packet.is_received = false;
+        return null_packet;
     }
 
     if (this->ipToRealName.find(mapping["src_IP"]) == this->ipToRealName.end())
     {
-        return nullptr;
+        ReceivedPacket null_packet;
+        null_packet.size = 0;
+        null_packet.payload = nullptr;
+        null_packet.is_received = false;
+        return null_packet;
     } else {
         if (!this->handler.openChannel(this->ipToRealName[mapping["dest_IP"]])) {
-            return nullptr;
+            ReceivedPacket null_packet;
+            null_packet.size = 0;
+            null_packet.payload = nullptr;
+            null_packet.is_received = false;
+            return null_packet;
         }
     }
 
     this->handler.setReadFilter(std::stoi(mapping["dest_port"]));
 
-    u_char* res = this->handler.read();
+
+    ReceivedPacket res = this->handler.read();
     this->handler.closeChannel();
     return res;
 }

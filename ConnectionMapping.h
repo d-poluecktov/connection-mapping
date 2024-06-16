@@ -1,8 +1,8 @@
-#include<iostream>
-#include<string>
+#include<fstream>
+#include<unordered_map>
 #include<vector>
 #include<tuple>
-#include<unordered_map>
+#include<string>
 #include"PcapHandler.h"
 
 #if defined(_WIN64) || defined(_WIN32)
@@ -54,7 +54,7 @@ public:
 
     int send(const std::string dest_model, const u_char* data);
 
-    u_char* receive(const std::string dest_model);
+    ReceivedPacket receive(const std::string dest_model);
 };
 
 

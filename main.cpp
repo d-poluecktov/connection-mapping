@@ -1,25 +1,31 @@
 #include <QCoreApplication>
 #include <QDebug>
-#include "unordered_map"
-#include "pcap.h"
+#include <QByteArray>
+#include <QString>
 
 #include "ConnectionMapping.h"
 
 int main(int argc, char *argv[]) {
-    //QCoreApplication a(argc, argv);
-    //qDebug() << "Hello World";
-    //return QCoreApplication::exec();
-
-    ConnectionMapping mapping = ConnectionMapping("./static"); // Указать путь до папки с файлами
-    //Спарсить все файлы
+    ConnectionMapping mapping = ConnectionMapping("./static");
     mapping.parseAll();
 
-    const u_char *packet_for_send = reinterpret_cast<const u_char *>(argv[2]);
+    //Отправить данные
+    QString qstr = "Something info";
+    QByteArray byteArray = qstr.toUtf8();
+    u_char* ucharArray = new u_char[byteArray.size()];
+    memcpy(ucharArray, byteArray.data(), byteArray.size());
+    const u_char* packet = reinterpret_cast<const u_char *>(ucharArray);
+    mapping.send("Imp1", packet);
 
 
-    //Предположим мы находимся на 3 сервере, хотим отправить на Imp1, необходимо указать получателя.
-    int res_send = mapping.send("Imp1", packet_for_send); //Отправить пакет
+    //Принять данные (на другом сервере)
+    ReceivedPacket res_packet = mapping.receive("Imp1");
+    if (res_packet.is_received) {
+        std::string stdstring(reinterpret_cast<const char*>(res_packet.payload), res_packet.size);
+        QString res = QString::fromStdString(stdstring);
+    } else {
+        std::cout << "Packet is not capture" << "\n";
+    }
 
-    //Принять пакет со стороны Imp1 (на 1 сервер) передать указатель, куда скопируется содержимое пакета
-    u_char* packet = mapping.receive("Imp1"); // Принять пакет
+
 }
