@@ -49,6 +49,7 @@ UDPHeader PcapHandler::constructUdpHeader(const int src_port, const int dest_por
 
 void PcapHandler::constructUdpBuffer(u_char *packet_buffer, EthernetHeader &eth_header, IPHeader &ip_header,
                                      UDPHeader &udp_header, const u_char *payload, size_t payload_size) {
+    //udp_header.checksum = checksum((unsigned short*) packet_buffer, ip_header, udp_header, payload_size);
     memcpy(packet_buffer, &eth_header, sizeof(EthernetHeader));
     memcpy(packet_buffer + sizeof(eth_header), &ip_header, sizeof(ip_header));
     memcpy(packet_buffer + sizeof(eth_header) + sizeof(ip_header), &udp_header, sizeof(udp_header));
@@ -149,10 +150,15 @@ ReceivedPacket PcapHandler::read() {
 }
 
 void PcapHandler::write(const std::string &src_ip, const std::string &dest_ip, const std::string &src_mac,
-                        const std::string &dest_mac, const int src_port, const int dest_port, const u_char *payload) {
+                        const std::string &dest_mac, const int src_port, const int dest_port, const u_char *payload, bool is_mnemocadr) {
+    size_t payload_size;
+    if (is_mnemocadr) {
+        payload_size = 444;
+    } else {
+        payload_size = strlen(reinterpret_cast<const char*>(payload));
+    }
 
 
-    size_t payload_size = strlen(reinterpret_cast<const char*>(payload));
     size_t max_fragment_size = 1000;
 
     size_t total_fragments = (payload_size + max_fragment_size - 1) / max_fragment_size;
@@ -235,6 +241,28 @@ std::array<uint8_t, 6> PcapHandler::macStringToBytes(const std::string &mac) {
     }
 
     return bytes;
+}
+
+unsigned short PcapHandler::checksum(unsigned short *packet_buffer, IPHeader &ip_header, UDPHeader &udp_header, size_t payload_size) {
+    unsigned short checksum_size = 0;
+    checksum_size += sizeof(ip_header.src_ip_addr);
+    checksum_size += sizeof(ip_header.dest_ip_addr);
+    checksum_size += sizeof(ip_header.protocol);
+    checksum_size += sizeof(udp_header.length);
+    checksum_size += sizeof(udp_header);
+    checksum_size += payload_size;
+
+    unsigned long result = 0;
+    while(checksum_size > 1)
+    {
+        result+=*packet_buffer++;
+        checksum_size -= sizeof(unsigned short);
+    }
+    if(checksum_size)
+        result+=*(unsigned short*)packet_buffer;
+    result = (result >> 16 ) + (result & 0xffff);
+    result += (result >> 16 );
+    return (unsigned short) (~result);
 }
 
 

@@ -52,7 +52,28 @@ public:
 
     void parseAll();
 
-    int send(const std::string dest_model, const u_char* data);
+    int send(const std::string dest_model, bool is_mnemocadr, const u_char* data);
+
+    static u_char* createMnemocadrData(uint8_t statusRSU,
+                                      std::unordered_map<std::string, uint8_t> impellerStatuses,
+                                      std::unordered_map<std::string, double> impellerRelRotSpeeds,
+                                      std::unordered_map<std::string, double> impellerAbsRotSpeeds,
+                                      double leftRUPosition,
+                                      double rightRUPosition,
+                                      double leftOZKRelSetpoint,
+                                      double rightOZKRelSetpoint,
+                                      double leftOZKAbsSpeed,
+                                      double rightOZKAbsSpeed,
+                                      double leftOZKDeviation,
+                                      double rightOZKDeviation,
+                                      std::unordered_map<std::string, uint8_t> leftImpellerConnectionStatuses,
+                                      std::unordered_map<std::string, uint8_t> rightImpellerConnectionStatuses,
+                                      uint8_t rsuMode,
+                                      double akbChargeLevel,
+                                      double akbDischargeCurrent,
+                                      double akbTemperature,
+                                      double sesVoltage,
+                                      uint32_t dateTime);
 
     ReceivedPacket receive(const std::string dest_model);
 };

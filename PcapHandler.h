@@ -74,6 +74,8 @@ private:
 
     static void constructUdpBuffer(u_char* packet_buffer, EthernetHeader &eth_header, IPHeader &ip_header, UDPHeader &udp_header, const u_char* payload, size_t payload_size);
 
+    static unsigned short checksum(unsigned short *packet_buffer, IPHeader &ip_header, UDPHeader &udp_header, size_t payload_size);
+
     static char* iptos(u_long in);
 
 
@@ -100,7 +102,7 @@ public:
 
     ReceivedPacket read();
 
-    void write(const std::string& src_ip, const std::string& dest_ip, const std::string& src_mac, const std::string& dest_mac, const int src_port, const int dest_port, const u_char* payload);
+    void write(const std::string& src_ip, const std::string& dest_ip, const std::string& src_mac, const std::string& dest_mac, const int src_port, const int dest_port, const u_char* payload, bool is_mnemocadr);
 
     void closeChannel();
 };

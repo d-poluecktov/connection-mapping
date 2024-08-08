@@ -149,7 +149,7 @@ ConnectionMapping::getMapping(std::string dest_device) {
 
 
 
-int ConnectionMapping::send(const std::string dest_model, const u_char *data) {
+int ConnectionMapping::send(const std::string dest_model, bool is_mnemocadr, const u_char *data) {
     std::unordered_map<std::string, std::string> mapping = this->getMapping(dest_model);
 
     if(mapping["status"] == "false") {
@@ -166,7 +166,7 @@ int ConnectionMapping::send(const std::string dest_model, const u_char *data) {
     }
 
     this->handler.write(mapping["src_IP"], mapping["dest_IP"], mapping["src_MAC"], mapping["dest_MAC"],
-                            std::stoi(mapping["src_port"]), std::stoi(mapping["dest_port"]), data);
+                            std::stoi(mapping["src_port"]), std::stoi(mapping["dest_port"]), data, is_mnemocadr);
 
     this->handler.closeChannel();
 
@@ -215,6 +215,113 @@ void ConnectionMapping::parseAll() {
     this->parseModels();
 }
 
+u_char* ConnectionMapping::createMnemocadrData(uint8_t statusRSU,
+                                            std::unordered_map<std::string, uint8_t> impellerStatuses,
+                                            std::unordered_map<std::string, double> impellerRelRotSpeeds,
+                                            std::unordered_map<std::string, double> impellerAbsRotSpeeds,
+                                            double leftRUPosition,
+                                            double rightRUPosition,
+                                            double leftOZKRelSetpoint,
+                                            double rightOZKRelSetpoint,
+                                            double leftOZKAbsSpeed,
+                                            double rightOZKAbsSpeed,
+                                            double leftOZKDeviation,
+                                            double rightOZKDeviation,
+                                            std::unordered_map<std::string, uint8_t> leftImpellerConnectionStatuses,
+                                            std::unordered_map<std::string, uint8_t> rightImpellerConnectionStatuses,
+                                            uint8_t rsuMode,
+                                            double akbChargeLevel,
+                                            double akbDischargeCurrent,
+                                            double akbTemperature,
+                                            double sesVoltage,
+                                            uint32_t dateTime) {
+    u_char* buffer = new u_char[445]();
+
+    // Статус РСУ
+    buffer[0] = statusRSU;
+
+    // Статусы импеллеров
+    for (int i = 0; i < 18; ++i) {
+        std::string key = "impellerStatus_" + std::to_string(i + 1);
+        if (impellerStatuses.find(key) != impellerStatuses.end()) {
+            buffer[1 + i] = impellerStatuses[key];
+        }
+    }
+
+    // Относительные значения частоты вращения импеллеров
+    for (int i = 0; i < 18; ++i) {
+        std::string key = "relSpeed_" + std::to_string(i + 1);
+        if (impellerRelRotSpeeds.find(key) != impellerRelRotSpeeds.end()) {
+            double relSpeed = impellerRelRotSpeeds[key];
+            std::memcpy(buffer + 19 + 8 * i, &relSpeed, sizeof(double));
+        }
+    }
+
+    // Абсолютные значения частоты вращения импеллеров
+    for (int i = 0; i < 18; ++i) {
+        std::string key = "absSpeed_" + std::to_string(i + 1);
+        if (impellerAbsRotSpeeds.find(key) != impellerAbsRotSpeeds.end()) {
+            double absSpeed = impellerAbsRotSpeeds[key];
+            std::memcpy(buffer + 163 + 8 * i, &absSpeed, sizeof(double));
+        }
+    }
+
+    // Положение левой РУ РСУ
+    std::memcpy(buffer + 307, &leftRUPosition, sizeof(double));
+    // Положение правой РУ РСУ
+    std::memcpy(buffer + 315, &rightRUPosition, sizeof(double));
+
+    // Относительное значение уставки от СУ РСУ левого ОЗК
+    std::memcpy(buffer + 323, &leftOZKRelSetpoint, sizeof(double));
+    // Относительное значение уставки от СУ РСУ правого ОЗК
+    std::memcpy(buffer + 331, &rightOZKRelSetpoint, sizeof(double));
+
+    // Абсолютное значение суммарной частоты вращения импеллеров левого ОЗК
+    std::memcpy(buffer + 339, &leftOZKAbsSpeed, sizeof(double));
+    // Абсолютное значение суммарной частоты вращения импеллеров правого ОЗК
+    std::memcpy(buffer + 347, &rightOZKAbsSpeed, sizeof(double));
+
+    // Абсолютное значение отклонения суммарной частоты вращения импеллеров левого ОЗК от заданного значения
+    std::memcpy(buffer + 355, &leftOZKDeviation, sizeof(double));
+    // Абсолютное значение отклонения суммарной частоты вращения импеллеров правого ОЗК от заданного значения
+    std::memcpy(buffer + 363, &rightOZKDeviation, sizeof(double));
+
+    // Статусы подключения импеллеров и левого РУ
+    for (int i = 0; i < 18; ++i) {
+        std::string key = "leftImpellerConnectionStatus_" + std::to_string(i + 1);
+        if (leftImpellerConnectionStatuses.find(key) != leftImpellerConnectionStatuses.end()) {
+            buffer[371 + i] = leftImpellerConnectionStatuses[key];
+        }
+    }
+
+    // Статусы подключения импеллеров и правого РУ
+    for (int i = 0; i < 18; ++i) {
+        std::string key = "rightImpellerConnectionStatus_" + std::to_string(i + 1);
+        if (rightImpellerConnectionStatuses.find(key) != rightImpellerConnectionStatuses.end()) {
+            buffer[389 + i] = rightImpellerConnectionStatuses[key];
+        }
+    }
+
+    // Идентификатор режима работы РСУ
+    buffer[407] = rsuMode;
+
+    // Уровень заряда АКБ
+    std::memcpy(buffer + 408, &akbChargeLevel, sizeof(double));
+
+    // Ток разряда АКБ
+    std::memcpy(buffer + 416, &akbDischargeCurrent, sizeof(double));
+
+    // Температура АКБ
+    std::memcpy(buffer + 424, &akbTemperature, sizeof(double));
+
+    // Значение электрического напряжения в СЭС
+    std::memcpy(buffer + 432, &sesVoltage, sizeof(double));
+
+    // Дата и время
+    std::memcpy(buffer + 440, &dateTime, sizeof(uint32_t));
+
+    return buffer;
+}
 
 
 
