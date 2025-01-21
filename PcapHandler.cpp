@@ -150,11 +150,14 @@ ReceivedPacket PcapHandler::read() {
 }
 
 void PcapHandler::write(const std::string &src_ip, const std::string &dest_ip, const std::string &src_mac,
-                        const std::string &dest_mac, const int src_port, const int dest_port, const u_char *payload, bool is_mnemocadr) {
+                        const std::string &dest_mac, const int src_port, const int dest_port, const u_char *payload, std::string flag) {
     size_t payload_size;
-    if (is_mnemocadr) {
-        payload_size = 444;
-    } else {
+    if (flag == "mnemocadr_data") {
+        payload_size = 360;
+    } else if (flag == "mnemocadr_rud") {
+        payload_size = 16;
+    } 
+    else {
         payload_size = strlen(reinterpret_cast<const char*>(payload));
     }
 

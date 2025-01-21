@@ -40,7 +40,6 @@ private:
 
     std::unordered_map<std::string, std::string> getMapping(std::string dest_device);
 
-
 public:
     ConnectionMapping(std::string path_to_directory) : path_to_directory(path_to_directory) {};
 
@@ -52,28 +51,16 @@ public:
 
     void parseAll();
 
-    int send(const std::string dest_model, bool is_mnemocadr, const u_char* data);
+    int send(const std::string dest_model, std::string flag, const u_char* data);
 
-    static u_char* createMnemocadrData(uint8_t statusRSU,
-                                      std::unordered_map<std::string, uint8_t> impellerStatuses,
-                                      std::unordered_map<std::string, double> impellerRelRotSpeeds,
-                                      std::unordered_map<std::string, double> impellerAbsRotSpeeds,
-                                      double leftRUPosition,
-                                      double rightRUPosition,
-                                      double leftOZKRelSetpoint,
-                                      double rightOZKRelSetpoint,
-                                      double leftOZKAbsSpeed,
-                                      double rightOZKAbsSpeed,
-                                      double leftOZKDeviation,
-                                      double rightOZKDeviation,
-                                      std::unordered_map<std::string, uint8_t> leftImpellerConnectionStatuses,
-                                      std::unordered_map<std::string, uint8_t> rightImpellerConnectionStatuses,
-                                      uint8_t rsuMode,
-                                      double akbChargeLevel,
-                                      double akbDischargeCurrent,
-                                      double akbTemperature,
-                                      double sesVoltage,
-                                      uint32_t dateTime);
+    static u_char* createMnemocadrData(std::unordered_map<std::string, double> angularSpeeds, 
+                                       std::unordered_map<std::string, int> statuses,         
+                                       double ustl, double ustp,                              
+                                       double tempAkb, double currentAkb, double voltageAkb,  
+                                       double oTempAkb, double oCurrentAkb, double oVoltageAkb,
+                                       int64_t timestamp );
+
+    static u_char* createMnemocadrRUD(double leftRUDPosition, double rightRUDPosition);
 
     ReceivedPacket receive(const std::string dest_model);
 };
